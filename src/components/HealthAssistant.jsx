@@ -13,19 +13,19 @@ const HealthAssistant = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isTyping]);
 
-  // 🚀 ASLI BACKEND CALL YAHAN SE HOGI
+  //backend call
   const handleSendMessage = async () => {
     if (!inputValue.trim()) return;
 
     const userText = inputValue;
     
-    // 1. User ka message turant screen par dikhao
+    // 1. display users msg on screen
     setMessages((prev) => [...prev, { role: 'user', text: userText }]);
     setInputValue('');
     setIsTyping(true);
 
     try {
-      // 2. Node.js Backend ko data bhejo (POST Request)
+      // 2. send data to node.js backend (POST Request)
       const response = await fetch('http://localhost:5000/api/chat', {
         method: 'POST',
         headers: {
@@ -36,7 +36,7 @@ const HealthAssistant = () => {
 
       const data = await response.json();
 
-      // 3. AI ka reply screen par dikhao
+      // 3. display ai's reply on screen
       if (response.ok) {
         setMessages((prev) => [...prev, { role: 'ai', text: data.text }]);
       } else {
@@ -46,7 +46,7 @@ const HealthAssistant = () => {
       console.error('Fetch Error:', error);
       setMessages((prev) => [...prev, { role: 'ai', text: 'Server se connect nahi ho pa raha hai. Check if backend is running.' }]);
     } finally {
-      setIsTyping(false); // Typing animation band karo
+      setIsTyping(false); // Off the typing animation
     }
   };
 
