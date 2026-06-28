@@ -1,3 +1,4 @@
+import DiagnosticReport from './DiagnosticReport';
 import React, { useState, useRef, useEffect } from 'react';
 
 const HealthAssistant = () => {
@@ -14,41 +15,46 @@ const HealthAssistant = () => {
   }, [messages, isTyping]);
 
   //backend call
-  const handleSendMessage = async () => {
+  // Apne purane handleSendMessage ko isse replace kar de:
+
+const handleSendMessage = async () => {
     if (!inputValue.trim()) return;
 
-    const userText = inputValue;
-    
-    // 1. display users msg on screen
-    setMessages((prev) => [...prev, { role: 'user', text: userText }]);
+    // 1. User ka message UI par add karna
+    const newUserMessage = { role: 'user', text: inputValue };
+    setMessages((prevMessages) => [...prevMessages, newUserMessage]);
     setInputValue('');
     setIsTyping(true);
 
+    // 2. Backend se data mangwana
     try {
-      // 2. send data to node.js backend (POST Request)
-      const response = await fetch('http://localhost:5000/api/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ prompt: userText }),
-      });
+        const res = await fetch('http://localhost:5000/api/ai/chat', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ message: newUserMessage.text }),
+        });
 
-      const data = await response.json();
+        // 3. API se aaya JSON data receive karna
+        const data = await res.json(); 
 
-      // 3. display ai's reply on screen
-      if (response.ok) {
-        setMessages((prev) => [...prev, { role: 'ai', text: data.text }]);
-      } else {
-        setMessages((prev) => [...prev, { role: 'ai', text: 'Oops! Backend error: ' + data.error }]);
-      }
+        // 4. AI ka response UI par add karna (as a report)
+        setMessages((prevMessages) => [
+            ...prevMessages,
+            { role: 'ai', isReport: true, reportData: data }
+        ]);
+
     } catch (error) {
-      console.error('Fetch Error:', error);
-      setMessages((prev) => [...prev, { role: 'ai', text: 'Server se connect nahi ho pa raha hai. Check if backend is running.' }]);
+        console.error("Error fetching AI response:", error);
+        setMessages((prevMessages) => [
+            ...prevMessages,
+            { role: 'ai', text: "Sorry, I am facing some network issues right now." }
+        ]);
     } finally {
-      setIsTyping(false); // Off the typing animation
+        setIsTyping(false);
     }
-  };
+};
 
   return (
     <div className="flex flex-col h-screen bg-slate-900 font-sans">
@@ -71,20 +77,24 @@ const HealthAssistant = () => {
 
       {/* Chat Area */}
       <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6 scroll-smooth">
-        {messages.map((msg, index) => (
-          <div key={index} className={`flex w-full ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            {msg.role === 'ai' && (
-              <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xs font-bold mr-3 mt-1 shrink-0">AI</div>
-            )}
-            <div className={`relative max-w-[85%] sm:max-w-[70%] px-5 py-4 text-[15px] leading-relaxed shadow-md ${msg.role === 'user' ? 'bg-blue-600 text-white rounded-2xl rounded-tr-sm' : 'bg-slate-800 text-slate-200 border border-slate-700 rounded-2xl rounded-tl-sm'}`}>
-              {/* React Markdown waghera baad me laga sakte hain, abhi direct text render karenge */}
-              <div style={{ whiteSpace: 'pre-wrap' }}>{msg.text}</div>
+       {/* Jaha tera message map ho raha hai, usko is tareeqe se likh: */}
+    {messages.map((msg, index) => (
+    <div key={index} className={`message-wrapper ${msg.role === 'user' ? 'flex justify-end' : 'flex justify-start'}`}>
+        
+        {/* Agar message simple text hai (jaise first greeting message) */}
+        {!msg.isReport && (
+            <div className={`message-bubble ${msg.role === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-black'}`}>
+                {msg.text}
             </div>
-            {msg.role === 'user' && (
-              <div className="w-8 h-8 rounded-full bg-slate-600 flex items-center justify-center text-white text-xs font-bold ml-3 mt-1 shrink-0">You</div>
-            )}
-          </div>
-        ))}
+        )}
+
+        {/* Agar message ek AI Report hai (JSON object) */}
+        {msg.isReport && (
+            <DiagnosticReport reportData={msg.reportData} />
+        )}
+        
+    </div>
+))}
 
         {/* Typing Animation */}
         {isTyping && (
