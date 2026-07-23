@@ -3,7 +3,6 @@
 const mongoose = require('mongoose');
 
 const reportSchema = new mongoose.Schema({
-    // Abhi ke liye hum user id nahi daal rahe jab tak login nahi ban jata
     symptoms: { 
         type: String, 
         required: true 
