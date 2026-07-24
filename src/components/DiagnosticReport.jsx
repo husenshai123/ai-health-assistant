@@ -1,14 +1,19 @@
-import React from 'react';
+import React, { useRef } from 'react';
+import { useReactToPrint } from 'react-to-print';
 
-// Renders the AI diagnostic report with a professional enterprise UI
-  const DiagnosticReport = ({ reportData }) => {
-  // Returns nothing if the data is missing to prevent crashes
+const DiagnosticReport = ({ reportData }) => {
+  const reportRef = useRef();
+
+  // Naya Hook method
+  const handleDownloadPdf = useReactToPrint({
+    contentRef: reportRef,
+    documentTitle: 'AI_Health_Report',
+  });
+
   if (!reportData) return null;
 
-  // Extracting all required fields from the JSON object
   const { urgencyLevel, possibleConditions, suggestedSpecialist, homeRemedies, precautionarySteps, disclaimer } = reportData;
 
-  // Dynamically sets the badge style based on the severity level
   const getBadgeStyle = (level) => {
     if (level === 'High') return 'bg-red-50 text-red-700 border border-red-200';
     if (level === 'Medium') return 'bg-orange-50 text-orange-700 border border-orange-200';
@@ -16,9 +21,8 @@ import React from 'react';
   };
 
   return (
-    <div className="max-w-3xl w-full mx-auto p-6 bg-white rounded-2xl shadow-sm border border-gray-200 my-4 hover:shadow-md transition-shadow duration-300">
+    <div ref={reportRef} className="max-w-3xl w-full mx-auto p-6 bg-white rounded-2xl shadow-sm border border-gray-200 my-4 hover:shadow-md transition-shadow duration-300">
       
-      {/* Header Section with Urgency Badge */}
       <div className="flex justify-between items-center border-b border-gray-100 pb-4 mb-5">
         <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
           🩺 AI Diagnostic Report
@@ -28,16 +32,12 @@ import React from 'react';
         </span>
       </div>
 
-      {/* Recommended Specialist Section */}
       <div className="bg-blue-50 border-l-4 border-blue-600 p-4 rounded-r-xl mb-6">
         <h3 className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-1">Recommended Action</h3>
         <p className="text-lg font-bold text-blue-900">Consult: {suggestedSpecialist || 'General Physician'}</p>
       </div>
 
-      {/* Grid Layout for Conditions & Remedies */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
-        
-        {/* Possible Conditions Box */}
         <div className="p-4 rounded-xl bg-gray-50 border border-gray-100">
           <h4 className="font-bold text-gray-700 text-md mb-3 flex items-center gap-2">
             🦠 Possible Conditions
@@ -51,7 +51,6 @@ import React from 'react';
           </ul>
         </div>
 
-        {/* Home Remedies Box */}
         <div className="p-4 rounded-xl bg-gray-50 border border-gray-100">
           <h4 className="font-bold text-gray-700 text-md mb-3 flex items-center gap-2">
             🌿 Home Remedies
@@ -66,7 +65,6 @@ import React from 'react';
         </div>
       </div>
 
-      {/* Precautionary Steps Section */}
       <div className="mb-6">
         <h4 className="font-bold text-gray-700 text-md mb-3">🛡️ Precautionary Steps</h4>
         <div className="flex flex-wrap gap-2">
@@ -82,14 +80,16 @@ import React from 'react';
         </div>
       </div>
 
-      {/* Footer Area: Disclaimer & Action Buttons */}
-      <div className="border-t border-gray-100 pt-4 mt-2 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="border-t border-gray-100 pt-4 mt-2 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 print:hidden">
         <p className="text-xs text-red-500 font-medium italic max-w-lg">
           *Disclaimer: {disclaimer || 'This is an AI-generated report and not a substitute for professional medical advice.'}
         </p>
         
-        {/* Placeholder button for the upcoming PDF feature */}
-        <button className="flex items-center gap-2 bg-gray-800 hover:bg-gray-900 text-white text-xs font-semibold py-2 px-4 rounded-lg transition-colors">
+        {/* Simple button with onClick */}
+        <button 
+          onClick={() => handleDownloadPdf()}
+          className="flex items-center gap-2 bg-gray-800 hover:bg-gray-900 text-white text-xs font-semibold py-2 px-4 rounded-lg transition-colors cursor-pointer"
+        >
           📄 Download PDF
         </button>
       </div>
