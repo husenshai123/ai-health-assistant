@@ -14,10 +14,7 @@ const HealthAssistant = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isTyping]);
 
-  //backend call
-  // Apne purane handleSendMessage ko isse replace kar de:
-
-const handleSendMessage = async () => {
+  const handleSendMessage = async () => {
     if (!inputValue.trim()) return;
 
     // 1. User ka message UI par add karna
@@ -54,13 +51,13 @@ const handleSendMessage = async () => {
     } finally {
         setIsTyping(false);
     }
-};
+  };
 
   return (
     <div className="flex flex-col h-screen bg-slate-900 font-sans">
       
       {/* Navbar */}
-      <header className="flex items-center justify-between px-8 py-5 bg-slate-800 border-b border-slate-700 shadow-sm z-10">
+      <header className="flex items-center justify-between px-8 py-5 bg-slate-800 border-b border-slate-700 shadow-sm z-10 shrink-0">
         <div className="flex items-center gap-4">
           <div className="flex items-center justify-center w-12 h-12 rounded-full bg-blue-500/20 text-blue-400 text-2xl">
             🩺
@@ -75,32 +72,37 @@ const handleSendMessage = async () => {
         </div>
       </header>
 
-      {/* Chat Area */}
-      <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6 scroll-smooth">
-       {/* Jaha tera message map ho raha hai, usko is tareeqe se likh: */}
-    {messages.map((msg, index) => (
-    <div key={index} className={`message-wrapper ${msg.role === 'user' ? 'flex justify-end' : 'flex justify-start'}`}>
-        
-        {/* Agar message simple text hai (jaise first greeting message) */}
-        {!msg.isReport && (
-            <div className={`message-bubble ${msg.role === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-black'}`}>
+      {/* Chat Area - Yahan Main Fixes Kiye Hain */}
+      <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
+        {messages.map((msg, index) => (
+          <div key={index} className={`flex w-full ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+            
+            {/* Simple Text Messages */}
+            {!msg.isReport && (
+              <div className={`px-5 py-3 shadow-sm max-w-[85%] sm:max-w-[75%] ${
+                msg.role === 'user' 
+                  ? 'bg-blue-600 text-white rounded-2xl rounded-tr-sm' 
+                  : 'bg-slate-700 text-slate-100 rounded-2xl rounded-tl-sm'
+              }`}>
                 {msg.text}
-            </div>
-        )}
+              </div>
+            )}
 
-        {/* Agar message ek AI Report hai (JSON object) */}
-        {msg.isReport && (
-            <DiagnosticReport reportData={msg.reportData} />
-        )}
-        
-    </div>
-))}
+            {/* Diagnostic Report Message */}
+            {msg.isReport && (
+              <div className="max-w-[100%] sm:max-w-[85%]">
+                 <DiagnosticReport reportData={msg.reportData} />
+              </div>
+            )}
+            
+          </div>
+        ))}
 
-        {/* Typing Animation */}
+        {/* Typing Animation UI - Fixed Colors & Layout */}
         {isTyping && (
-          <div className="flex w-full justify-start items-center">
-             <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xs font-bold mr-3 shrink-0">AI</div>
-            <div className="bg-slate-800 border border-slate-700 rounded-2xl rounded-tl-sm px-5 py-4 flex gap-1.5 items-center shadow-md">
+          <div className="flex w-full justify-start items-end gap-2">
+             <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xs font-bold shrink-0">AI</div>
+            <div className="bg-slate-700 rounded-2xl rounded-tl-sm px-4 py-3 flex gap-1.5 items-center shadow-sm h-[44px]">
               <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce"></div>
               <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
               <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
@@ -111,7 +113,7 @@ const handleSendMessage = async () => {
       </div>
 
       {/* Input Form */}
-      <div className="p-4 sm:p-6 bg-slate-900 border-t border-slate-800">
+      <div className="p-4 sm:p-6 bg-slate-900 border-t border-slate-800 shrink-0">
         <div className="max-w-5xl mx-auto flex gap-3 sm:gap-4 items-end bg-slate-800 p-2 sm:p-3 rounded-2xl border border-slate-700 focus-within:border-blue-500/50 focus-within:ring-4 focus-within:ring-blue-500/10 transition-all">
           <input 
             type="text"
