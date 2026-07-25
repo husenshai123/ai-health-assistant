@@ -4,7 +4,7 @@ import { useReactToPrint } from 'react-to-print';
 const DiagnosticReport = ({ reportData }) => {
   const reportRef = useRef();
 
-  // Naya Hook method
+  // New Hook method
   const handleDownloadPdf = useReactToPrint({
     contentRef: reportRef,
     documentTitle: 'AI_Health_Report',
