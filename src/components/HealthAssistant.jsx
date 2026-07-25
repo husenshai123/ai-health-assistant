@@ -128,6 +128,20 @@ const HealthAssistant = () => {
         <div ref={messagesEndRef} className="h-1" />
       </div>
 
+      {/* Quick Suggestion Chips */}
+<div className="max-w-5xl mx-auto flex flex-wrap gap-2 mb-3">
+  {['I have a fever', 'Tips for better sleep', 'Headache and nausea'].map((text, index) => (
+    <button
+      key={index}
+      onClick={() => setInputValue(text)}
+      disabled={isTyping}
+      className="text-xs sm:text-sm bg-slate-800 hover:bg-slate-700 text-slate-300 px-4 py-2 rounded-full border border-slate-700 transition-colors shadow-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+    >
+      💡 {text}
+    </button>
+  ))}
+</div>
+
       {/* Input Form */}
       <div className="p-4 sm:p-6 bg-slate-900 border-t border-slate-800 shrink-0">
         <div className="max-w-5xl mx-auto flex gap-3 sm:gap-4 items-end bg-slate-800 p-2 sm:p-3 rounded-2xl border border-slate-700 focus-within:border-blue-500/50 focus-within:ring-4 focus-within:ring-blue-500/10 transition-all">
