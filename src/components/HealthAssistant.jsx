@@ -1,10 +1,19 @@
 import DiagnosticReport from './DiagnosticReport';
 import React, { useState, useRef, useEffect } from 'react';
 
+// Time format karne ka helper function (e.g., "10:45 AM")
+const formatTime = () => {
+  return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+};
+
 const HealthAssistant = () => {
-  const defaultGreeting = { role: 'ai', text: 'Hello! I am your AI Health Assistant. Please describe your symptoms so I can assist you better.' };
+  // Greeting me time add kiya
+  const defaultGreeting = { 
+    role: 'ai', 
+    text: 'Hello! I am your AI Health Assistant. Please describe your symptoms so I can assist you better.',
+    time: formatTime()
+  };
   
-  // 1. Modified: Load chat history from LocalStorage (if available)
   const [messages, setMessages] = useState(() => {
     const savedMessages = localStorage.getItem('health_chat_history');
     return savedMessages ? JSON.parse(savedMessages) : [defaultGreeting];
@@ -15,19 +24,18 @@ const HealthAssistant = () => {
   
   const messagesEndRef = useRef(null);
 
-  // Scroll to bottom effect
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isTyping]);
 
-  // 2. New: Auto-save messages to LocalStorage whenever chat updates
   useEffect(() => {
     localStorage.setItem('health_chat_history', JSON.stringify(messages));
   }, [messages]);
 
-  // 3. Modified: Clear chat from UI and LocalStorage both
   const handleClearChat = () => {
-    setMessages([defaultGreeting]);
+    // Clear karte waqt naya time generate hoga
+    const freshGreeting = { ...defaultGreeting, time: formatTime() };
+    setMessages([freshGreeting]);
     localStorage.removeItem('health_chat_history');
     setInputValue('');
   };
@@ -35,7 +43,8 @@ const HealthAssistant = () => {
   const handleSendMessage = async () => {
     if (!inputValue.trim()) return;
 
-    const newUserMessage = { role: 'user', text: inputValue };
+    // User message me time add kiya
+    const newUserMessage = { role: 'user', text: inputValue, time: formatTime() };
     setMessages((prevMessages) => [...prevMessages, newUserMessage]);
     setInputValue('');
     setIsTyping(true);
@@ -51,16 +60,18 @@ const HealthAssistant = () => {
 
         const data = await res.json(); 
 
+        // AI report me time add kiya
         setMessages((prevMessages) => [
             ...prevMessages,
-            { role: 'ai', isReport: true, reportData: data }
+            { role: 'ai', isReport: true, reportData: data, time: formatTime() }
         ]);
 
     } catch (error) {
         console.error("Error fetching AI response:", error);
+        // Error message me time add kiya
         setMessages((prevMessages) => [
             ...prevMessages,
-            { role: 'ai', text: "Sorry, I am facing some network issues right now." }
+            { role: 'ai', text: "Sorry, I am facing some network issues right now.", time: formatTime() }
         ]);
     } finally {
         setIsTyping(false);
@@ -85,7 +96,6 @@ const HealthAssistant = () => {
           </div>
         </div>
 
-        {/* New Chat Button */}
         <button 
           onClick={handleClearChat}
           className="flex items-center gap-2 bg-slate-700 hover:bg-slate-600 text-slate-200 text-sm font-medium py-2 px-4 rounded-xl transition-colors border border-slate-600 shadow-sm"
@@ -102,7 +112,7 @@ const HealthAssistant = () => {
       {/* Chat Area */}
       <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
         {messages.map((msg, index) => (
-          <div key={index} className={`flex w-full ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+          <div key={index} className={`flex flex-col w-full ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
             
             {/* Simple Text Messages */}
             {!msg.isReport && (
@@ -122,6 +132,13 @@ const HealthAssistant = () => {
               </div>
             )}
             
+            {/* Timestamp Display */}
+            {msg.time && (
+              <span className="text-[10px] text-slate-500 mt-1 px-1">
+                {msg.time}
+              </span>
+            )}
+
           </div>
         ))}
 
@@ -139,7 +156,7 @@ const HealthAssistant = () => {
         <div ref={messagesEndRef} className="h-1" />
       </div>
 
-      {/* Input Form Section (Chips moved inside here for better UI layout) */}
+      {/* Input Form Section */}
       <div className="p-4 sm:p-6 bg-slate-900 border-t border-slate-800 shrink-0">
         
         {/* Quick Suggestion Chips */}
@@ -178,6 +195,12 @@ const HealthAssistant = () => {
             </svg>
           </button>
         </div>
+
+        {/* Medical Disclaimer Footer */}
+        <div className="text-center mt-4 text-[10px] sm:text-xs text-slate-500 px-4">
+          <span className="font-semibold text-slate-400">Disclaimer:</span> This AI provides informational responses only. Please consult a certified doctor for medical emergencies.
+        </div>
+
       </div>
 
     </div>
