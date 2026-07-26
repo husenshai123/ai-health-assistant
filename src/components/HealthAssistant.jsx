@@ -2,22 +2,33 @@ import DiagnosticReport from './DiagnosticReport';
 import React, { useState, useRef, useEffect } from 'react';
 
 const HealthAssistant = () => {
-  // 1. Initial greeting message ko alag variable me rakha taaki reset karna aasan ho
   const defaultGreeting = { role: 'ai', text: 'Hello! I am your AI Health Assistant. Please describe your symptoms so I can assist you better.' };
   
-  const [messages, setMessages] = useState([defaultGreeting]);
+  // 1. Modified: Load chat history from LocalStorage (if available)
+  const [messages, setMessages] = useState(() => {
+    const savedMessages = localStorage.getItem('health_chat_history');
+    return savedMessages ? JSON.parse(savedMessages) : [defaultGreeting];
+  });
+  
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   
   const messagesEndRef = useRef(null);
 
+  // Scroll to bottom effect
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isTyping]);
 
-  // 2. Chat clear karne ka naya function
+  // 2. New: Auto-save messages to LocalStorage whenever chat updates
+  useEffect(() => {
+    localStorage.setItem('health_chat_history', JSON.stringify(messages));
+  }, [messages]);
+
+  // 3. Modified: Clear chat from UI and LocalStorage both
   const handleClearChat = () => {
     setMessages([defaultGreeting]);
+    localStorage.removeItem('health_chat_history');
     setInputValue('');
   };
 
@@ -74,7 +85,7 @@ const HealthAssistant = () => {
           </div>
         </div>
 
-        {/* 3. Naya "New Chat" Button */}
+        {/* New Chat Button */}
         <button 
           onClick={handleClearChat}
           className="flex items-center gap-2 bg-slate-700 hover:bg-slate-600 text-slate-200 text-sm font-medium py-2 px-4 rounded-xl transition-colors border border-slate-600 shadow-sm"
@@ -128,22 +139,24 @@ const HealthAssistant = () => {
         <div ref={messagesEndRef} className="h-1" />
       </div>
 
-      {/* Quick Suggestion Chips */}
-<div className="max-w-5xl mx-auto flex flex-wrap gap-2 mb-3">
-  {['I have a fever', 'Tips for better sleep', 'Headache and nausea'].map((text, index) => (
-    <button
-      key={index}
-      onClick={() => setInputValue(text)}
-      disabled={isTyping}
-      className="text-xs sm:text-sm bg-slate-800 hover:bg-slate-700 text-slate-300 px-4 py-2 rounded-full border border-slate-700 transition-colors shadow-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-    >
-      💡 {text}
-    </button>
-  ))}
-</div>
-
-      {/* Input Form */}
+      {/* Input Form Section (Chips moved inside here for better UI layout) */}
       <div className="p-4 sm:p-6 bg-slate-900 border-t border-slate-800 shrink-0">
+        
+        {/* Quick Suggestion Chips */}
+        <div className="max-w-5xl mx-auto flex flex-wrap gap-2 mb-4">
+          {['I have a fever', 'Tips for better sleep', 'Headache and nausea'].map((text, index) => (
+            <button
+              key={index}
+              onClick={() => setInputValue(text)}
+              disabled={isTyping}
+              className="text-xs sm:text-sm bg-slate-800 hover:bg-slate-700 text-slate-300 px-4 py-2 rounded-full border border-slate-700 transition-colors shadow-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              💡 {text}
+            </button>
+          ))}
+        </div>
+
+        {/* Main Input Bar */}
         <div className="max-w-5xl mx-auto flex gap-3 sm:gap-4 items-end bg-slate-800 p-2 sm:p-3 rounded-2xl border border-slate-700 focus-within:border-blue-500/50 focus-within:ring-4 focus-within:ring-blue-500/10 transition-all">
           <input 
             type="text"
