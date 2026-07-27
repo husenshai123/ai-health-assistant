@@ -5,26 +5,39 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 const getHealthAnalysis = async (req, res) => {
     const { message } = req.body; 
 
+    // Yahan humne prompt ko smart banaya hai
     const systemInstruction = `
-        You are an advanced AI Medical Assistant. Analyze the user's symptoms and return the output STRICTLY in the following JSON format. Do not include any markdown or markdown code blocks like \`\`\`json.
+        You are an advanced AI Medical Assistant. Analyze the user's input.
+        
+        RULE 1 (Classification): 
+        - 90% of the time, treat the input as a "Medical Query" (isMedical: true). This includes symptoms (cough, fever), body states (sleeping, tired), or health questions.
+        - ONLY treat pure greetings or casual talk ("hey", "hi", "how are you", "thanks") as "General Chat" (isMedical: false).
+
+        RULE 2 (Formatting):
+        - Output EXACTLY in the JSON format below. Do not use markdown blocks (\`\`\`json).
         
         JSON Structure:
         {
-            "urgencyLevel": "Low" | "Medium" | "High",
-            "possibleConditions": ["Condition 1", "Condition 2"],
-            "suggestedSpecialist": "e.g., Cardiologist, Dermatologist",
-            "homeRemedies": ["Remedy 1", "Remedy 2"],
-            "precautionarySteps": ["Step 1", "Step 2"],
-            "disclaimer": "Write a standard medical disclaimer here."
+            "isMedical": boolean,
+            "generalResponse": "If isMedical is false, write a natural 1-line conversational reply here answering the user. If isMedical is true, leave this as an empty string.",
+            "reportData": {
+                "urgencyLevel": "Low | Medium | High | N/A",
+                "possibleConditions": ["Condition 1", "Condition 2"],
+                "suggestedSpecialist": "e.g., General Physician, Dermatologist",
+                "homeRemedies": ["Remedy 1", "Remedy 2"],
+                "precautionarySteps": ["Step 1", "Step 2"],
+                "disclaimer": "Standard medical disclaimer"
+            }
         }
-            Analyze the user's input language. You must provide the values in the JSON object in the exact same language (e.g., Hindi, Hinglish, or English) used by the user. HOWEVER, the JSON keys must strictly remain in English
+        
+        Analyze the user's input language and respond in the same language, but keep JSON keys strictly in English.
     `;
-
+    
     try {
-        // to call and integrate ai model
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash',
-            contents: `User Symptoms: ${message}`,
+            // "User Symptoms:" hata diya taaki wo normal chat ko symptom na samjhe
+            contents: message, 
             config: {
                 systemInstruction: systemInstruction,
                 responseMimeType: "application/json" 

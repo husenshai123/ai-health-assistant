@@ -1,13 +1,11 @@
 import DiagnosticReport from './DiagnosticReport';
 import React, { useState, useRef, useEffect } from 'react';
 
-// Time format karne ka helper function (e.g., "10:45 AM")
 const formatTime = () => {
   return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 };
 
 const HealthAssistant = () => {
-  // Greeting me time add kiya
   const defaultGreeting = { 
     role: 'ai', 
     text: 'Hello! I am your AI Health Assistant. Please describe your symptoms so I can assist you better.',
@@ -33,7 +31,6 @@ const HealthAssistant = () => {
   }, [messages]);
 
   const handleClearChat = () => {
-    // Clear karte waqt naya time generate hoga
     const freshGreeting = { ...defaultGreeting, time: formatTime() };
     setMessages([freshGreeting]);
     localStorage.removeItem('health_chat_history');
@@ -43,7 +40,6 @@ const HealthAssistant = () => {
   const handleSendMessage = async () => {
     if (!inputValue.trim()) return;
 
-    // User message me time add kiya
     const newUserMessage = { role: 'user', text: inputValue, time: formatTime() };
     setMessages((prevMessages) => [...prevMessages, newUserMessage]);
     setInputValue('');
@@ -60,15 +56,28 @@ const HealthAssistant = () => {
 
         const data = await res.json(); 
 
-        // AI report me time add kiya
-        setMessages((prevMessages) => [
-            ...prevMessages,
-            { role: 'ai', isReport: true, reportData: data, time: formatTime() }
-        ]);
+        // NAYA LOGIC: Agar medical query hai toh Report dikhao, warna Normal Text
+        // NAYA LOGIC: Agar medical query hai toh Report dikhao, warna Normal Text
+        if (data.isMedical) {
+            setMessages((prevMessages) => [
+                ...prevMessages,
+                { role: 'ai', isReport: true, reportData: data.reportData, time: formatTime() }
+            ]);
+        } else {
+            // Yahan || lagakar fallback diya hai taaki blank bubble kabhi na aaye
+            setMessages((prevMessages) => [
+                 ...prevMessages,
+                { 
+                  role: 'ai', 
+                  isReport: false, 
+                  text: data.generalResponse || "Hello! I am your AI Health Assistant. How can I help you today?", 
+                  time: formatTime() 
+                }
+            ]);
+        }
 
     } catch (error) {
         console.error("Error fetching AI response:", error);
-        // Error message me time add kiya
         setMessages((prevMessages) => [
             ...prevMessages,
             { role: 'ai', text: "Sorry, I am facing some network issues right now.", time: formatTime() }
@@ -76,6 +85,12 @@ const HealthAssistant = () => {
     } finally {
         setIsTyping(false);
     }
+  };
+
+  // Naya function: Text copy karne ke liye
+  const handleCopyText = (text) => {
+    navigator.clipboard.writeText(text);
+    alert('Message copied to clipboard! 📋');
   };
 
   return (
@@ -132,12 +147,29 @@ const HealthAssistant = () => {
               </div>
             )}
             
-            {/* Timestamp Display */}
-            {msg.time && (
-              <span className="text-[10px] text-slate-500 mt-1 px-1">
-                {msg.time}
-              </span>
-            )}
+            {/* Timestamp & Copy Button Display */}
+            <div className="flex items-center gap-3 mt-1 px-1">
+              {msg.time && (
+                <span className="text-[10px] text-slate-500">
+                  {msg.time}
+                </span>
+              )}
+              
+              {/* Copy Button - Sirf AI ke text messages par dikhega */}
+              {msg.role === 'ai' && !msg.isReport && (
+                <button
+                  onClick={() => handleCopyText(msg.text)}
+                  className="text-[10px] flex items-center gap-1 text-slate-500 hover:text-slate-300 transition-colors cursor-pointer"
+                  title="Copy message"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                  </svg>
+                  Copy
+                </button>
+              )}
+            </div>
 
           </div>
         ))}
