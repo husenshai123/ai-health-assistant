@@ -20,7 +20,12 @@ const HealthAssistant = () => {
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   
+  // Naya state: Floating button dikhane ya chupane ke liye
+  const [showScrollButton, setShowScrollButton] = useState(false); 
+  
   const messagesEndRef = useRef(null);
+  // Naya ref: Chat div ka scroll track karne ke liye
+  const chatContainerRef = useRef(null); 
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -56,17 +61,14 @@ const HealthAssistant = () => {
 
         const data = await res.json(); 
 
-        // NAYA LOGIC: Agar medical query hai toh Report dikhao, warna Normal Text
-        // NAYA LOGIC: Agar medical query hai toh Report dikhao, warna Normal Text
         if (data.isMedical) {
             setMessages((prevMessages) => [
                 ...prevMessages,
                 { role: 'ai', isReport: true, reportData: data.reportData, time: formatTime() }
             ]);
         } else {
-            // Yahan || lagakar fallback diya hai taaki blank bubble kabhi na aaye
             setMessages((prevMessages) => [
-                 ...prevMessages,
+                ...prevMessages,
                 { 
                   role: 'ai', 
                   isReport: false, 
@@ -87,10 +89,24 @@ const HealthAssistant = () => {
     }
   };
 
-  // Naya function: Text copy karne ke liye
   const handleCopyText = (text) => {
     navigator.clipboard.writeText(text);
     alert('Message copied to clipboard! 📋');
+  };
+
+  // Naya function: Check karna ki user kitna upar scroll kiya hai
+  const handleScroll = () => {
+    if (!chatContainerRef.current) return;
+    const { scrollTop, scrollHeight, clientHeight } = chatContainerRef.current;
+    
+    // Agar user bottom se 100px se zyada upar hai, toh button dikhao
+    const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
+    setShowScrollButton(!isNearBottom);
+  };
+
+  // Naya function: Button click karne par neeche scroll karne ke liye
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   return (
@@ -124,74 +140,88 @@ const HealthAssistant = () => {
         </button>
       </header>
 
-      {/* Chat Area */}
-      <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
-        {messages.map((msg, index) => (
-          <div key={index} className={`flex flex-col w-full ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
-            
-            {/* Simple Text Messages */}
-            {!msg.isReport && (
-              <div className={`px-5 py-3 shadow-sm max-w-[85%] sm:max-w-[75%] ${
-                msg.role === 'user' 
-                  ? 'bg-blue-600 text-white rounded-2xl rounded-tr-sm' 
-                  : 'bg-slate-700 text-slate-100 rounded-2xl rounded-tl-sm'
-              }`}>
-                {msg.text}
-              </div>
-            )}
+      {/* Wrapper Div (Relative) jisme button float karega */}
+      <div className="flex-1 relative overflow-hidden flex flex-col">
+        
+        {/* Chat Area (Ab isme onScroll aur ref laga hai) */}
+        <div 
+          ref={chatContainerRef}
+          onScroll={handleScroll}
+          className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6"
+        >
+          {messages.map((msg, index) => (
+            <div key={index} className={`flex flex-col w-full ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+              
+              {!msg.isReport && (
+                <div className={`px-5 py-3 shadow-sm max-w-[85%] sm:max-w-[75%] ${
+                  msg.role === 'user' 
+                    ? 'bg-blue-600 text-white rounded-2xl rounded-tr-sm' 
+                    : 'bg-slate-700 text-slate-100 rounded-2xl rounded-tl-sm'
+                }`}>
+                  {msg.text}
+                </div>
+              )}
 
-            {/* Diagnostic Report Message */}
-            {msg.isReport && (
-              <div className="max-w-[100%] sm:max-w-[85%]">
-                 <DiagnosticReport reportData={msg.reportData} />
-              </div>
-            )}
-            
-            {/* Timestamp & Copy Button Display */}
-            <div className="flex items-center gap-3 mt-1 px-1">
-              {msg.time && (
-                <span className="text-[10px] text-slate-500">
-                  {msg.time}
-                </span>
+              {msg.isReport && (
+                <div className="max-w-[100%] sm:max-w-[85%]">
+                   <DiagnosticReport reportData={msg.reportData} />
+                </div>
               )}
               
-              {/* Copy Button - Sirf AI ke text messages par dikhega */}
-              {msg.role === 'ai' && !msg.isReport && (
-                <button
-                  onClick={() => handleCopyText(msg.text)}
-                  className="text-[10px] flex items-center gap-1 text-slate-500 hover:text-slate-300 transition-colors cursor-pointer"
-                  title="Copy message"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                  </svg>
-                  Copy
-                </button>
-              )}
+              <div className="flex items-center gap-3 mt-1 px-1">
+                {msg.time && (
+                  <span className="text-[10px] text-slate-500">
+                    {msg.time}
+                  </span>
+                )}
+                
+                {msg.role === 'ai' && !msg.isReport && (
+                  <button
+                    onClick={() => handleCopyText(msg.text)}
+                    className="text-[10px] flex items-center gap-1 text-slate-500 hover:text-slate-300 transition-colors cursor-pointer"
+                    title="Copy message"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
+                    Copy
+                  </button>
+                )}
+              </div>
             </div>
+          ))}
 
-          </div>
-        ))}
-
-        {/* Typing Animation UI */}
-        {isTyping && (
-          <div className="flex w-full justify-start items-end gap-2">
-             <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xs font-bold shrink-0">AI</div>
-            <div className="bg-slate-700 rounded-2xl rounded-tl-sm px-4 py-3 flex gap-1.5 items-center shadow-sm h-[44px]">
-              <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce"></div>
-              <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-              <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+          {isTyping && (
+            <div className="flex w-full justify-start items-end gap-2">
+               <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xs font-bold shrink-0">AI</div>
+              <div className="bg-slate-700 rounded-2xl rounded-tl-sm px-4 py-3 flex gap-1.5 items-center shadow-sm h-[44px]">
+                <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce"></div>
+                <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+              </div>
             </div>
-          </div>
+          )}
+          <div ref={messagesEndRef} className="h-1" />
+        </div>
+
+        {/* NAYA: Floating Scroll to Bottom Button */}
+        {showScrollButton && (
+          <button
+            onClick={scrollToBottom}
+            className="absolute bottom-4 right-4 sm:right-6 p-3 bg-slate-700/90 hover:bg-slate-600 text-slate-200 hover:text-white rounded-full shadow-lg backdrop-blur-sm transition-all z-20 border border-slate-600 flex items-center justify-center animate-fade-in"
+            title="Scroll to latest message"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 5v14"/>
+              <path d="m19 12-7 7-7-7"/>
+            </svg>
+          </button>
         )}
-        <div ref={messagesEndRef} className="h-1" />
       </div>
 
       {/* Input Form Section */}
       <div className="p-4 sm:p-6 bg-slate-900 border-t border-slate-800 shrink-0">
-        
-        {/* Quick Suggestion Chips */}
         <div className="max-w-5xl mx-auto flex flex-wrap gap-2 mb-4">
           {['I have a fever', 'Tips for better sleep', 'Headache and nausea'].map((text, index) => (
             <button
@@ -205,7 +235,6 @@ const HealthAssistant = () => {
           ))}
         </div>
 
-        {/* Main Input Bar */}
         <div className="max-w-5xl mx-auto flex gap-3 sm:gap-4 items-end bg-slate-800 p-2 sm:p-3 rounded-2xl border border-slate-700 focus-within:border-blue-500/50 focus-within:ring-4 focus-within:ring-blue-500/10 transition-all">
           <input 
             type="text"
@@ -228,11 +257,9 @@ const HealthAssistant = () => {
           </button>
         </div>
 
-        {/* Medical Disclaimer Footer */}
         <div className="text-center mt-4 text-[10px] sm:text-xs text-slate-500 px-4">
           <span className="font-semibold text-slate-400">Disclaimer:</span> This AI provides informational responses only. Please consult a certified doctor for medical emergencies.
         </div>
-
       </div>
 
     </div>
