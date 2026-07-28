@@ -94,7 +94,21 @@ const HealthAssistant = () => {
     alert('Message copied to clipboard! 📋');
   };
 
-  // Naya function: Check karna ki user kitna upar scroll kiya hai
+  const handleExportChat = () => {
+    const chatText = messages.map(m => 
+      `${m.role === 'ai' ? 'Doctor AI' : 'Patient'} [${m.time || ''}]:\n${m.isReport ? '🏥 [Detailed Diagnostic Report Generated]' : m.text}`
+    ).join('\n\n---------------------------------------\n\n');
+    
+    const blob = new Blob([chatText], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'My_Health_Report.txt';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+  
+
   const handleScroll = () => {
     if (!chatContainerRef.current) return;
     const { scrollTop, scrollHeight, clientHeight } = chatContainerRef.current;
@@ -126,7 +140,14 @@ const HealthAssistant = () => {
             </div>
           </div>
         </div>
-
+      
+        <button 
+          onClick={handleExportChat}
+          className="flex items-center gap-2 bg-slate-700 hover:bg-slate-600 text-slate-200 text-sm font-medium py-2 px-4 rounded-xl transition-colors border border-slate-600 shadow-sm mr-2"
+          title="Download chat history"
+        >
+          📄 Export
+        </button>
         <button 
           onClick={handleClearChat}
           className="flex items-center gap-2 bg-slate-700 hover:bg-slate-600 text-slate-200 text-sm font-medium py-2 px-4 rounded-xl transition-colors border border-slate-600 shadow-sm"
