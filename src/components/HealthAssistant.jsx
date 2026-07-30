@@ -35,11 +35,14 @@ const HealthAssistant = () => {
     localStorage.setItem('health_chat_history', JSON.stringify(messages));
   }, [messages]);
 
+  // UPDATE: Confirmation alert add kiya
   const handleClearChat = () => {
-    const freshGreeting = { ...defaultGreeting, time: formatTime() };
-    setMessages([freshGreeting]);
-    localStorage.removeItem('health_chat_history');
-    setInputValue('');
+    if (window.confirm('Are you sure you want to start a new chat? Your current history will be deleted.')) {
+      const freshGreeting = { ...defaultGreeting, time: formatTime() };
+      setMessages([freshGreeting]);
+      localStorage.removeItem('health_chat_history');
+      setInputValue('');
+    }
   };
 
   const handleSendMessage = async () => {
@@ -141,24 +144,26 @@ const HealthAssistant = () => {
           </div>
         </div>
       
-        <button 
-          onClick={handleExportChat}
-          className="flex items-center gap-2 bg-slate-700 hover:bg-slate-600 text-slate-200 text-sm font-medium py-2 px-4 rounded-xl transition-colors border border-slate-600 shadow-sm mr-2"
-          title="Download chat history"
-        >
-          📄 Export
-        </button>
-        <button 
-          onClick={handleClearChat}
-          className="flex items-center gap-2 bg-slate-700 hover:bg-slate-600 text-slate-200 text-sm font-medium py-2 px-4 rounded-xl transition-colors border border-slate-600 shadow-sm"
-          title="Start a new conversation"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
-            <path d="M3 3v5h5"/>
-          </svg>
-          New Chat
-        </button>
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={handleExportChat}
+            className="flex items-center gap-2 bg-slate-700 hover:bg-slate-600 text-slate-200 text-sm font-medium py-2 px-4 rounded-xl transition-colors border border-slate-600 shadow-sm"
+            title="Download chat history"
+          >
+            📄 Export
+          </button>
+          <button 
+            onClick={handleClearChat}
+            className="flex items-center gap-2 bg-slate-700 hover:bg-slate-600 text-slate-200 text-sm font-medium py-2 px-4 rounded-xl transition-colors border border-slate-600 shadow-sm"
+            title="Start a new conversation"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+              <path d="M3 3v5h5"/>
+            </svg>
+            New Chat
+          </button>
+        </div>
       </header>
 
       {/* Wrapper Div (Relative) jisme button float karega */}
