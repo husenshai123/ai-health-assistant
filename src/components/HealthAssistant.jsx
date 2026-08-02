@@ -20,11 +20,11 @@ const HealthAssistant = () => {
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   
-  // Naya state: Floating button dikhane ya chupane ke liye
   const [showScrollButton, setShowScrollButton] = useState(false); 
+  // NAYA STATE: Mic track karne ke liye
+  const [isListening, setIsListening] = useState(false); 
   
   const messagesEndRef = useRef(null);
-  // Naya ref: Chat div ka scroll track karne ke liye
   const chatContainerRef = useRef(null); 
 
   useEffect(() => {
@@ -35,7 +35,6 @@ const HealthAssistant = () => {
     localStorage.setItem('health_chat_history', JSON.stringify(messages));
   }, [messages]);
 
-  // UPDATE: Confirmation alert add kiya
   const handleClearChat = () => {
     if (window.confirm('Are you sure you want to start a new chat? Your current history will be deleted.')) {
       const freshGreeting = { ...defaultGreeting, time: formatTime() };
@@ -111,19 +110,33 @@ const HealthAssistant = () => {
     URL.revokeObjectURL(url);
   };
   
-
   const handleScroll = () => {
     if (!chatContainerRef.current) return;
     const { scrollTop, scrollHeight, clientHeight } = chatContainerRef.current;
     
-    // Agar user bottom se 100px se zyada upar hai, toh button dikhao
     const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
     setShowScrollButton(!isNearBottom);
   };
 
-  // Naya function: Button click karne par neeche scroll karne ke liye
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  // NAYA FUNCTION: Voice Input handle karne ke liye
+  const handleVoiceInput = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert("Sorry, your browser doesn't support voice input.");
+      return;
+    }
+    const recognition = new SpeechRecognition();
+    recognition.onstart = () => setIsListening(true);
+    recognition.onresult = (event) => {
+      const currentTranscript = event.results[0][0].transcript;
+      setInputValue(prev => (prev + " " + currentTranscript).trim());
+    };
+    recognition.onend = () => setIsListening(false);
+    recognition.start();
   };
 
   return (
@@ -166,10 +179,10 @@ const HealthAssistant = () => {
         </div>
       </header>
 
-      {/* Wrapper Div (Relative) jisme button float karega */}
+      {/* Wrapper Div */}
       <div className="flex-1 relative overflow-hidden flex flex-col">
         
-        {/* Chat Area (Ab isme onScroll aur ref laga hai) */}
+        {/* Chat Area */}
         <div 
           ref={chatContainerRef}
           onScroll={handleScroll}
@@ -231,7 +244,7 @@ const HealthAssistant = () => {
           <div ref={messagesEndRef} className="h-1" />
         </div>
 
-        {/* NAYA: Floating Scroll to Bottom Button */}
+        {/* Floating Scroll Button */}
         {showScrollButton && (
           <button
             onClick={scrollToBottom}
@@ -271,6 +284,23 @@ const HealthAssistant = () => {
             onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
             disabled={isTyping}
           />
+          
+          {/* NAYA: Mic Button Add Kiya */}
+          <button
+            onClick={handleVoiceInput}
+            disabled={isTyping}
+            className={`p-3 rounded-xl transition-colors flex items-center justify-center ${
+              isListening ? 'bg-red-500/20 text-red-500 animate-pulse' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700'
+            }`}
+            title="Speak your symptoms"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+              <line x1="12" y1="19" x2="12" y2="22"></line>
+            </svg>
+          </button>
+
           <button 
             onClick={handleSendMessage}
             disabled={isTyping || !inputValue.trim()}
