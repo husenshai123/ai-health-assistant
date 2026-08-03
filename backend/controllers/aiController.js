@@ -3,15 +3,15 @@ const { GoogleGenAI } = require("@google/genai");
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 const getHealthAnalysis = async (req, res) => {
-    const { message } = req.body; 
+    // NAYA: image bhi destructure kar rahe hain
+    const { message, image } = req.body; 
 
-    // Yahan humne prompt ko smart banaya hai
     const systemInstruction = `
-        You are an advanced AI Medical Assistant. Analyze the user's input.
+        You are an advanced AI Medical Assistant. Analyze the user's input and any provided images (like medical reports, prescriptions, or visible symptoms).
         
         RULE 1 (Classification): 
-        - 90% of the time, treat the input as a "Medical Query" (isMedical: true). This includes symptoms (cough, fever), body states (sleeping, tired), or health questions.
-        - ONLY treat pure greetings or casual talk ("hey", "hi", "how are you", "thanks") as "General Chat" (isMedical: false).
+        - 90% of the time, treat the input as a "Medical Query" (isMedical: true). This includes symptoms (cough, fever), body states (sleeping, tired), health questions, or analyzing medical images/reports.
+        - ONLY treat pure greetings or casual talk ("hey", "hi", "how are you", "thanks") without any images as "General Chat" (isMedical: false).
 
         RULE 2 (Formatting):
         - Output EXACTLY in the JSON format below. Do not use markdown blocks (\`\`\`json).
@@ -32,12 +32,25 @@ const getHealthAnalysis = async (req, res) => {
         
         Analyze the user's input language and respond in the same language, but keep JSON keys strictly in English.
     `;
-    
+
     try {
+        let contents = [];
+        
+        if (message) contents.push(message);
+        
+        // NAYA: Agar image aayi hai, toh usko inlineData format me array me daal do
+        if (image) {
+            contents.push({
+                inlineData: {
+                    data: image.data,
+                    mimeType: image.mimeType
+                }
+            });
+        }
+
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            // "User Symptoms:" hata diya taaki wo normal chat ko symptom na samjhe
-            contents: message, 
+            model: 'gemini-2.5-flash', // Flash model natively supports images
+            contents: contents, 
             config: {
                 systemInstruction: systemInstruction,
                 responseMimeType: "application/json" 
