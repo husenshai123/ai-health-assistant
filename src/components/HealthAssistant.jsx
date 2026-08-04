@@ -5,6 +5,26 @@ const formatTime = () => {
   return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 };
 
+// NAYA COMPONENT: Typewriter effect ke liye
+const Typewriter = ({ text }) => {
+  const [displayedText, setDisplayedText] = useState('');
+
+  useEffect(() => {
+    let i = 0;
+    const interval = setInterval(() => {
+      setDisplayedText(text.slice(0, i + 1));
+      i++;
+      if (i >= text.length) {
+        clearInterval(interval);
+      }
+    }, 20); // 20ms typing speed (mast natural feel aayegi)
+    
+    return () => clearInterval(interval);
+  }, [text]);
+
+  return <span>{displayedText}</span>;
+};
+
 const HealthAssistant = () => {
   const defaultGreeting = { 
     role: 'ai', 
@@ -22,24 +42,25 @@ const HealthAssistant = () => {
   const [showScrollButton, setShowScrollButton] = useState(false); 
   const [isListening, setIsListening] = useState(false); 
   
-  // NAYA STATE: Selected Image ko hold karne ke liye
   const [selectedImage, setSelectedImage] = useState(null);
   
   const messagesEndRef = useRef(null);
   const chatContainerRef = useRef(null); 
-  const fileInputRef = useRef(null); // File input trigger karne ke liye
+  const fileInputRef = useRef(null); 
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isTyping]);
 
+  // Yahan hum msg.animate true wale flags hata kar save kar rahe hain taaki history me typing na ho
   useEffect(() => {
-    localStorage.setItem('health_chat_history', JSON.stringify(messages));
+    const messagesToSave = messages.map(msg => ({ ...msg, animate: false }));
+    localStorage.setItem('health_chat_history', JSON.stringify(messagesToSave));
   }, [messages]);
 
   const handleClearChat = () => {
     if (window.confirm('Are you sure you want to start a new chat? Your current history will be deleted.')) {
-      const freshGreeting = { ...defaultGreeting, time: formatTime() };
+      const freshGreeting = { ...defaultGreeting, time: formatTime(), animate: true };
       setMessages([freshGreeting]);
       localStorage.removeItem('health_chat_history');
       setInputValue('');
@@ -47,16 +68,15 @@ const HealthAssistant = () => {
     }
   };
 
-  // NAYA FUNCTION: Image upload handle karne ke liye
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
         setSelectedImage({
-          data: reader.result.split(',')[1], // Base64 raw data extract karna
+          data: reader.result.split(',')[1], 
           mimeType: file.type,
-          url: reader.result // UI Preview ke liye full URL
+          url: reader.result 
         });
       };
       reader.readAsDataURL(file);
@@ -70,7 +90,7 @@ const HealthAssistant = () => {
     const newUserMessage = { 
       role: 'user', 
       text: messageText, 
-      imageUrl: selectedImage ? selectedImage.url : null, // UI me user ki image dikhane ke liye
+      imageUrl: selectedImage ? selectedImage.url : null,
       time: formatTime() 
     };
     
@@ -79,7 +99,7 @@ const HealthAssistant = () => {
     const imageToSend = selectedImage ? { data: selectedImage.data, mimeType: selectedImage.mimeType } : null;
     
     setInputValue('');
-    setSelectedImage(null); // Input se image clear kardo bhejne ke baad
+    setSelectedImage(null); 
     setIsTyping(true);
 
     try {
@@ -105,7 +125,8 @@ const HealthAssistant = () => {
                   role: 'ai', 
                   isReport: false, 
                   text: data.generalResponse || "Hello! I am your AI Health Assistant. How can I help you today?", 
-                  time: formatTime() 
+                  time: formatTime(),
+                  animate: true // NAYA: AI ke naye message ko animate karne ka flag
                 }
             ]);
         }
@@ -113,7 +134,7 @@ const HealthAssistant = () => {
         console.error("Error fetching AI response:", error);
         setMessages((prevMessages) => [
             ...prevMessages,
-            { role: 'ai', text: "Sorry, I am facing some network issues right now.", time: formatTime() }
+            { role: 'ai', text: "Sorry, I am facing some network issues right now.", time: formatTime(), animate: true }
         ]);
     } finally {
         setIsTyping(false);
@@ -205,11 +226,15 @@ const HealthAssistant = () => {
                 <div className={`px-5 py-3 shadow-sm max-w-[85%] sm:max-w-[75%] ${
                   msg.role === 'user' ? 'bg-blue-600 text-white rounded-2xl rounded-tr-sm' : 'bg-slate-700 text-slate-100 rounded-2xl rounded-tl-sm'
                 }`}>
-                  {/* Agar user ne image bheji hai toh render karo */}
                   {msg.imageUrl && (
                     <img src={msg.imageUrl} alt="User uploaded" className="w-48 h-auto rounded-lg mb-2 border border-slate-600 object-cover" />
                   )}
-                  {msg.text}
+                  {/* NAYA LOGIC: Agar AI ka message hai aur naya hai, toh Typewriter use karo */}
+                  {msg.role === 'ai' && msg.animate ? (
+                    <Typewriter text={msg.text} />
+                  ) : (
+                    <span>{msg.text}</span>
+                  )}
                 </div>
               )}
 
@@ -257,7 +282,18 @@ const HealthAssistant = () => {
       {/* Input Form Section */}
       <div className="p-4 sm:p-6 bg-slate-900 border-t border-slate-800 shrink-0">
         
-        {/* NAYA: Image Preview box jab user image select karega */}
+        <div className="max-w-5xl mx-auto flex flex-wrap gap-2 mb-4">
+          {['I have a fever', 'Tips for better sleep', 'Headache and nausea'].map((text, index) => (
+            <button
+              key={index}
+              onClick={() => setInputValue(text)}
+              disabled={isTyping}
+              className="text-xs sm:text-sm bg-slate-800 hover:bg-slate-700 text-slate-300 px-4 py-2 rounded-full border border-slate-700 transition-colors shadow-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              💡 {text}
+            </button>
+          ))}
+        </div>
         {selectedImage && (
           <div className="max-w-5xl mx-auto mb-3">
              <div className="relative inline-block border border-slate-600 rounded-lg p-2 bg-slate-800 shadow-md">
@@ -275,7 +311,6 @@ const HealthAssistant = () => {
 
         <div className="max-w-5xl mx-auto flex gap-3 sm:gap-4 items-end bg-slate-800 p-2 sm:p-3 rounded-2xl border border-slate-700 focus-within:border-blue-500/50 focus-within:ring-4 focus-within:ring-blue-500/10 transition-all">
           
-          {/* NAYA: Hidden File Input aur Attachment Button */}
           <input 
             type="file" 
             accept="image/*" 
