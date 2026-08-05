@@ -52,7 +52,6 @@ const HealthAssistant = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isTyping]);
 
-  // Yahan hum msg.animate true wale flags hata kar save kar rahe hain taaki history me typing na ho
   useEffect(() => {
     const messagesToSave = messages.map(msg => ({ ...msg, animate: false }));
     localStorage.setItem('health_chat_history', JSON.stringify(messagesToSave));
@@ -126,7 +125,7 @@ const HealthAssistant = () => {
                   isReport: false, 
                   text: data.generalResponse || "Hello! I am your AI Health Assistant. How can I help you today?", 
                   time: formatTime(),
-                  animate: true // NAYA: AI ke naye message ko animate karne ka flag
+                  animate: true 
                 }
             ]);
         }
@@ -144,6 +143,12 @@ const HealthAssistant = () => {
   const handleCopyText = (text) => {
     navigator.clipboard.writeText(text);
     alert('Message copied to clipboard! 📋');
+  };
+
+  // NAYA FUNCTION: WhatsApp par share karne ke liye
+  const handleWhatsAppShare = (text) => {
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
+    window.open(whatsappUrl, '_blank');
   };
 
   const handleExportChat = () => {
@@ -229,7 +234,6 @@ const HealthAssistant = () => {
                   {msg.imageUrl && (
                     <img src={msg.imageUrl} alt="User uploaded" className="w-48 h-auto rounded-lg mb-2 border border-slate-600 object-cover" />
                   )}
-                  {/* NAYA LOGIC: Agar AI ka message hai aur naya hai, toh Typewriter use karo */}
                   {msg.role === 'ai' && msg.animate ? (
                     <Typewriter text={msg.text} />
                   ) : (
@@ -244,16 +248,26 @@ const HealthAssistant = () => {
                 </div>
               )}
               
-              <div className="flex items-center gap-3 mt-1 px-1">
+              <div className="flex items-center gap-4 mt-1 px-1">
                 {msg.time && <span className="text-[10px] text-slate-500">{msg.time}</span>}
                 {msg.role === 'ai' && !msg.isReport && (
-                  <button onClick={() => handleCopyText(msg.text)} className="text-[10px] flex items-center gap-1 text-slate-500 hover:text-slate-300 transition-colors cursor-pointer" title="Copy message">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                    </svg>
-                    Copy
-                  </button>
+                  <div className="flex items-center gap-3">
+                    <button onClick={() => handleCopyText(msg.text)} className="text-[10px] flex items-center gap-1 text-slate-500 hover:text-slate-300 transition-colors cursor-pointer" title="Copy message">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                      </svg>
+                      Copy
+                    </button>
+                    
+                    {/* NAYA: WhatsApp Share Button */}
+                    <button onClick={() => handleWhatsAppShare(msg.text)} className="text-[10px] flex items-center gap-1 text-green-500/80 hover:text-green-400 transition-colors cursor-pointer" title="Share on WhatsApp">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                      </svg>
+                      Share
+                    </button>
+                  </div>
                 )}
               </div>
             </div>
