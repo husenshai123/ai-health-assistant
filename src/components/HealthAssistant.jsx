@@ -5,7 +5,7 @@ const formatTime = () => {
   return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 };
 
-// NAYA COMPONENT: Typewriter effect ke liye
+// Typewriter effect ke liye
 const Typewriter = ({ text }) => {
   const [displayedText, setDisplayedText] = useState('');
 
@@ -17,7 +17,7 @@ const Typewriter = ({ text }) => {
       if (i >= text.length) {
         clearInterval(interval);
       }
-    }, 20); // 20ms typing speed (mast natural feel aayegi)
+    }, 20); 
     
     return () => clearInterval(interval);
   }, [text]);
@@ -64,6 +64,13 @@ const HealthAssistant = () => {
       localStorage.removeItem('health_chat_history');
       setInputValue('');
       setSelectedImage(null);
+    }
+  };
+
+  // NAYA FUNCTION: Individual Message Delete karne ke liye
+  const handleDeleteMessage = (indexToDelete) => {
+    if (window.confirm('Are you sure you want to delete this message?')) {
+      setMessages((prevMessages) => prevMessages.filter((_, index) => index !== indexToDelete));
     }
   };
 
@@ -145,7 +152,6 @@ const HealthAssistant = () => {
     alert('Message copied to clipboard! 📋');
   };
 
-  // NAYA FUNCTION: WhatsApp par share karne ke liye
   const handleWhatsAppShare = (text) => {
     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
     window.open(whatsappUrl, '_blank');
@@ -250,6 +256,7 @@ const HealthAssistant = () => {
               
               <div className="flex items-center gap-4 mt-1 px-1">
                 {msg.time && <span className="text-[10px] text-slate-500">{msg.time}</span>}
+                
                 {msg.role === 'ai' && !msg.isReport && (
                   <div className="flex items-center gap-3">
                     <button onClick={() => handleCopyText(msg.text)} className="text-[10px] flex items-center gap-1 text-slate-500 hover:text-slate-300 transition-colors cursor-pointer" title="Copy message">
@@ -260,7 +267,6 @@ const HealthAssistant = () => {
                       Copy
                     </button>
                     
-                    {/* NAYA: WhatsApp Share Button */}
                     <button onClick={() => handleWhatsAppShare(msg.text)} className="text-[10px] flex items-center gap-1 text-green-500/80 hover:text-green-400 transition-colors cursor-pointer" title="Share on WhatsApp">
                       <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
@@ -269,6 +275,16 @@ const HealthAssistant = () => {
                     </button>
                   </div>
                 )}
+
+                {/* NAYA: Delete Button (User aur AI dono ke messages ke liye) */}
+                <button onClick={() => handleDeleteMessage(index)} className="text-[10px] flex items-center gap-1 text-red-500/80 hover:text-red-400 transition-colors cursor-pointer" title="Delete message">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                  </svg>
+                  Delete
+                </button>
+
               </div>
             </div>
           ))}
