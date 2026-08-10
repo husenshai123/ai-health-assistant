@@ -5,7 +5,7 @@ const formatTime = () => {
   return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 };
 
-// Typewriter effect ke liye
+// Typewriter effect
 const Typewriter = ({ text }) => {
   const [displayedText, setDisplayedText] = useState('');
 
@@ -29,7 +29,8 @@ const HealthAssistant = () => {
   const defaultGreeting = { 
     role: 'ai', 
     text: 'Hello! I am your AI Health Assistant. Please describe your symptoms or upload a medical report so I can assist you better.',
-    time: formatTime()
+    time: formatTime(),
+    isStarred: false 
   };
   
   const [messages, setMessages] = useState(() => {
@@ -67,11 +68,19 @@ const HealthAssistant = () => {
     }
   };
 
-  // NAYA FUNCTION: Individual Message Delete karne ke liye
   const handleDeleteMessage = (indexToDelete) => {
     if (window.confirm('Are you sure you want to delete this message?')) {
       setMessages((prevMessages) => prevMessages.filter((_, index) => index !== indexToDelete));
     }
+  };
+
+  // NAYA: Star Message Logic
+  const handleToggleStar = (indexToStar) => {
+    setMessages((prevMessages) => 
+      prevMessages.map((msg, index) => 
+        index === indexToStar ? { ...msg, isStarred: !msg.isStarred } : msg
+      )
+    );
   };
 
   const handleImageUpload = (e) => {
@@ -97,7 +106,8 @@ const HealthAssistant = () => {
       role: 'user', 
       text: messageText, 
       imageUrl: selectedImage ? selectedImage.url : null,
-      time: formatTime() 
+      time: formatTime(),
+      isStarred: false 
     };
     
     setMessages((prevMessages) => [...prevMessages, newUserMessage]);
@@ -122,7 +132,7 @@ const HealthAssistant = () => {
         if (data.isMedical) {
             setMessages((prevMessages) => [
                 ...prevMessages,
-                { role: 'ai', isReport: true, reportData: data.reportData, time: formatTime() }
+                { role: 'ai', isReport: true, reportData: data.reportData, time: formatTime(), isStarred: false }
             ]);
         } else {
             setMessages((prevMessages) => [
@@ -132,7 +142,8 @@ const HealthAssistant = () => {
                   isReport: false, 
                   text: data.generalResponse || "Hello! I am your AI Health Assistant. How can I help you today?", 
                   time: formatTime(),
-                  animate: true 
+                  animate: true,
+                  isStarred: false 
                 }
             ]);
         }
@@ -140,7 +151,7 @@ const HealthAssistant = () => {
         console.error("Error fetching AI response:", error);
         setMessages((prevMessages) => [
             ...prevMessages,
-            { role: 'ai', text: "Sorry, I am facing some network issues right now.", time: formatTime(), animate: true }
+            { role: 'ai', text: "Sorry, I am facing some network issues right now.", time: formatTime(), animate: true, isStarred: false }
         ]);
     } finally {
         setIsTyping(false);
@@ -234,9 +245,10 @@ const HealthAssistant = () => {
             <div key={index} className={`flex flex-col w-full ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
               
               {!msg.isReport && (
-                <div className={`px-5 py-3 shadow-sm max-w-[85%] sm:max-w-[75%] ${
+                // NAYA: Yahan humne msg.isStarred add kiya hai background glow ke liye
+                <div className={`px-5 py-3 shadow-sm max-w-[85%] sm:max-w-[75%] transition-all ${
                   msg.role === 'user' ? 'bg-blue-600 text-white rounded-2xl rounded-tr-sm' : 'bg-slate-700 text-slate-100 rounded-2xl rounded-tl-sm'
-                }`}>
+                } ${msg.isStarred ? 'ring-2 ring-yellow-400 shadow-md shadow-yellow-500/10' : ''}`}>
                   {msg.imageUrl && (
                     <img src={msg.imageUrl} alt="User uploaded" className="w-48 h-auto rounded-lg mb-2 border border-slate-600 object-cover" />
                   )}
@@ -249,7 +261,7 @@ const HealthAssistant = () => {
               )}
 
               {msg.isReport && (
-                <div className="max-w-[100%] sm:max-w-[85%]">
+                <div className={`max-w-[100%] sm:max-w-[85%] transition-all rounded-2xl ${msg.isStarred ? 'ring-2 ring-yellow-400 shadow-md shadow-yellow-500/10' : ''}`}>
                    <DiagnosticReport reportData={msg.reportData} />
                 </div>
               )}
@@ -276,7 +288,14 @@ const HealthAssistant = () => {
                   </div>
                 )}
 
-                {/* NAYA: Delete Button (User aur AI dono ke messages ke liye) */}
+                {/* NAYA: Star/Bookmark Button */}
+                <button onClick={() => handleToggleStar(index)} className={`text-[10px] flex items-center gap-1 transition-colors cursor-pointer ${msg.isStarred ? 'text-yellow-400' : 'text-slate-500 hover:text-slate-300'}`} title="Star message">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill={msg.isStarred ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                  </svg>
+                  {msg.isStarred ? 'Starred' : 'Star'}
+                </button>
+
                 <button onClick={() => handleDeleteMessage(index)} className="text-[10px] flex items-center gap-1 text-red-500/80 hover:text-red-400 transition-colors cursor-pointer" title="Delete message">
                   <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <polyline points="3 6 5 6 21 6"></polyline>
