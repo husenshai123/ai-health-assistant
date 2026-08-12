@@ -1,29 +1,31 @@
-// backend/server.js
-
-require('dotenv').config(); // Environment variables load karne ke liye (Sabse upar)
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const connectDB = require('./config/db'); // 1. Database connection file ko import kiya
-const aiRoutes = require('./routes/aiRoutes');
+const mongoose = require('mongoose');
 
+// 1. Imports
+const authRoutes = require('./routes/authRoutes');
+const aiRoutes = require('./routes/aiRoutes'); // Tumhara purana AI route yahan hoga
+
+// 2. APP INITIALIZATION (Ye line sabse zaroori hai pehle aani chahiye)
 const app = express();
- 
-// 2. Database ko connect karne ka function call kiya
-connectDB(); 
 
-// Middlewares
+// 3. Middlewares
 app.use(cors());
-app.use(express.json()); // Frontend se JSON data read karne ke liye
+app.use(express.json({ limit: '50mb' })); 
 
-// Routes setup
-app.use('/api/ai', aiRoutes); 
+// 4. MongoDB Connection
+const mongoURI = process.env.MONGO_URI || "mongodb://127.0.0.1:27017/ai-health-app"; 
+mongoose.connect(mongoURI)
+  .then(() => console.log('MongoDB Connected Successfully! 🚀'))
+  .catch(err => console.log('MongoDB Connection Error:', err));
 
-// Import health tips controller
-const { getHealthTips } = require('./controllers/healthController');
-// Register health tips route
-app.get('/api/health-tips', getHealthTips);
+// 5. Routes Use Karna (app banne ke baad)
+app.use('/api/auth', authRoutes);
+app.use('/api/ai', aiRoutes); // Tumhara purana route
 
+// 6. Server Start
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT} 🚀`);
+    console.log(`Server running on port ${PORT}`);
 });
