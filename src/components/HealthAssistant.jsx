@@ -5,7 +5,7 @@ const formatTime = () => {
   return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 };
 
-// Typewriter effect ke liye
+// Typewriter effect
 const Typewriter = ({ text }) => {
   const [displayedText, setDisplayedText] = useState('');
 
@@ -26,9 +26,12 @@ const Typewriter = ({ text }) => {
 };
 
 const HealthAssistant = () => {
+  // NAYA: Local storage se user ka naam nikalna
+  const userName = localStorage.getItem('health_user') || 'Patient';
+
   const defaultGreeting = { 
     role: 'ai', 
-    text: 'Hello! I am your AI Health Assistant. Please describe your symptoms or upload a medical report so I can assist you better.',
+    text: `Hello ${userName}! I am your AI Health Assistant. Please describe your symptoms or upload a medical report so I can assist you better.`,
     time: formatTime(),
     isStarred: false 
   };
@@ -56,6 +59,16 @@ const HealthAssistant = () => {
     const messagesToSave = messages.map(msg => ({ ...msg, animate: false }));
     localStorage.setItem('health_chat_history', JSON.stringify(messagesToSave));
   }, [messages]);
+
+  // NAYA: Secure Logout Functionality
+  const handleLogout = () => {
+    if (window.confirm('Are you sure you want to securely log out?')) {
+      localStorage.removeItem('health_token');
+      localStorage.removeItem('health_user');
+      localStorage.removeItem('health_chat_history'); // Optional: clear chat on logout
+      window.location.reload(); // Reload to trigger App.jsx Auth screen
+    }
+  };
 
   const handleClearChat = () => {
     if (window.confirm('Are you sure you want to start a new chat? Your current history will be deleted.')) {
@@ -138,7 +151,7 @@ const HealthAssistant = () => {
                 { 
                   role: 'ai', 
                   isReport: false, 
-                  text: data.generalResponse || "Hello! I am your AI Health Assistant. How can I help you today?", 
+                  text: data.generalResponse || `Here to help, ${userName}. What else can I assist with?`, 
                   time: formatTime(),
                   animate: true,
                   isStarred: false 
@@ -168,14 +181,14 @@ const HealthAssistant = () => {
 
   const handleExportChat = () => {
     const chatText = messages.map(m => 
-      `${m.role === 'ai' ? 'Doctor AI' : 'Patient'} [${m.time || ''}]:\n${m.imageUrl ? '[Image Attached] ' : ''}${m.isReport ? '🏥 [Detailed Diagnostic Report Generated]' : m.text}`
+      `${m.role === 'ai' ? 'Doctor AI' : userName} [${m.time || ''}]:\n${m.imageUrl ? '[Image Attached] ' : ''}${m.isReport ? '🏥 [Detailed Diagnostic Report Generated]' : m.text}`
     ).join('\n\n---------------------------------------\n\n');
     
     const blob = new Blob([chatText], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'My_Health_Report.txt';
+    a.download = `${userName.replace(/\s+/g, '_')}_Health_Report.txt`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -210,28 +223,40 @@ const HealthAssistant = () => {
   return (
     <div className="flex flex-col h-screen bg-slate-900 font-sans">
       
-      {/* Navbar */}
-      <header className="flex items-center justify-between px-8 py-5 bg-slate-800 border-b border-slate-700 shadow-sm z-10 shrink-0">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center justify-center w-12 h-12 rounded-full bg-blue-500/20 text-blue-400 text-2xl">🩺</div>
+      {/* UPDATE: Enhanced Navbar with User Profile & Logout */}
+      <header className="flex items-center justify-between px-4 sm:px-8 py-4 bg-slate-800 border-b border-slate-700 shadow-sm z-10 shrink-0">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-blue-500/20 text-blue-400 text-xl sm:text-2xl shadow-inner border border-blue-500/20">🩺</div>
           <div>
-            <h1 className="text-xl font-bold text-slate-100 tracking-wide">AI Health Assistant</h1>
+            <h1 className="text-lg sm:text-xl font-bold text-slate-100 tracking-wide">AI Health Assistant</h1>
             <div className="flex items-center gap-2 mt-1">
-              <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
-              <span className="text-sm text-emerald-400 font-medium">System Online</span>
+              <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
+              <span className="text-xs sm:text-sm text-emerald-400 font-medium">System Online</span>
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <button onClick={handleExportChat} className="flex items-center gap-2 bg-slate-700 hover:bg-slate-600 text-slate-200 text-sm font-medium py-2 px-4 rounded-xl transition-colors border border-slate-600 shadow-sm" title="Download chat history">
+        
+        <div className="flex items-center gap-3">
+          
+          {/* NAYA: User Profile Display */}
+          <div className="hidden md:flex flex-col items-end mr-2 pr-4 border-r border-slate-700">
+            <span className="text-sm font-bold text-slate-200 capitalize">{userName}</span>
+            <span className="text-[10px] text-slate-400">Authenticated User</span>
+          </div>
+
+          <button onClick={handleExportChat} className="hidden sm:flex items-center gap-2 bg-slate-700 hover:bg-slate-600 text-slate-200 text-sm font-medium py-2 px-4 rounded-xl transition-colors border border-slate-600 shadow-sm" title="Download chat history">
             📄 Export
           </button>
-          <button onClick={handleClearChat} className="flex items-center gap-2 bg-slate-700 hover:bg-slate-600 text-slate-200 text-sm font-medium py-2 px-4 rounded-xl transition-colors border border-slate-600 shadow-sm" title="Start a new conversation">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
-              <path d="M3 3v5h5"/>
-            </svg>
-            New Chat
+          
+          <button onClick={handleClearChat} className="flex items-center justify-center w-10 h-10 sm:w-auto sm:h-auto sm:py-2 sm:px-4 gap-2 bg-slate-700 hover:bg-slate-600 text-slate-200 text-sm font-medium rounded-xl transition-colors border border-slate-600 shadow-sm" title="Start a new conversation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+            <span className="hidden sm:inline">New Chat</span>
+          </button>
+
+          {/* NAYA: Logout Button */}
+          <button onClick={handleLogout} className="flex items-center justify-center w-10 h-10 sm:w-auto sm:h-auto sm:py-2 sm:px-4 gap-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 text-sm font-medium rounded-xl transition-colors border border-red-500/20 shadow-sm" title="Secure Logout">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+            <span className="hidden sm:inline">Logout</span>
           </button>
         </div>
       </header>
@@ -252,7 +277,7 @@ const HealthAssistant = () => {
                   {msg.role === 'ai' && msg.animate ? (
                     <Typewriter text={msg.text} />
                   ) : (
-                    <span>{msg.text}</span>
+                    <span className="whitespace-pre-wrap">{msg.text}</span>
                   )}
                 </div>
               )}
@@ -269,34 +294,24 @@ const HealthAssistant = () => {
                 {msg.role === 'ai' && !msg.isReport && (
                   <div className="flex items-center gap-3">
                     <button onClick={() => handleCopyText(msg.text)} className="text-[10px] flex items-center gap-1 text-slate-500 hover:text-slate-300 transition-colors cursor-pointer" title="Copy message">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                      </svg>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                       Copy
                     </button>
                     
                     <button onClick={() => handleWhatsAppShare(msg.text)} className="text-[10px] flex items-center gap-1 text-green-500/80 hover:text-green-400 transition-colors cursor-pointer" title="Share on WhatsApp">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
-                      </svg>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
                       Share
                     </button>
                   </div>
                 )}
 
                 <button onClick={() => handleToggleStar(index)} className={`text-[10px] flex items-center gap-1 transition-colors cursor-pointer ${msg.isStarred ? 'text-yellow-400' : 'text-slate-500 hover:text-slate-300'}`} title="Star message">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill={msg.isStarred ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                  </svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill={msg.isStarred ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
                   {msg.isStarred ? 'Starred' : 'Star'}
                 </button>
 
                 <button onClick={() => handleDeleteMessage(index)} className="text-[10px] flex items-center gap-1 text-red-500/80 hover:text-red-400 transition-colors cursor-pointer" title="Delete message">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="3 6 5 6 21 6"></polyline>
-                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                  </svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                   Delete
                 </button>
 
@@ -306,7 +321,7 @@ const HealthAssistant = () => {
 
           {isTyping && (
             <div className="flex w-full justify-start items-end gap-2">
-               <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xs font-bold shrink-0">AI</div>
+               <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xs font-bold shrink-0 shadow-md">AI</div>
               <div className="bg-slate-700 rounded-2xl rounded-tl-sm px-4 py-3 flex gap-1.5 items-center shadow-sm h-[44px]">
                 <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce"></div>
                 <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
@@ -339,6 +354,7 @@ const HealthAssistant = () => {
             </button>
           ))}
         </div>
+        
         {selectedImage && (
           <div className="max-w-5xl mx-auto mb-3">
              <div className="relative inline-block border border-slate-600 rounded-lg p-2 bg-slate-800 shadow-md">
@@ -354,7 +370,7 @@ const HealthAssistant = () => {
           </div>
         )}
 
-        <div className="max-w-5xl mx-auto flex gap-3 sm:gap-4 items-end bg-slate-800 p-2 sm:p-3 rounded-2xl border border-slate-700 focus-within:border-blue-500/50 focus-within:ring-4 focus-within:ring-blue-500/10 transition-all">
+        <div className="max-w-5xl mx-auto flex gap-2 sm:gap-4 items-end bg-slate-800 p-2 sm:p-3 rounded-2xl border border-slate-700 focus-within:border-blue-500/50 focus-within:ring-4 focus-within:ring-blue-500/10 transition-all">
           
           <input 
             type="file" 
@@ -375,7 +391,7 @@ const HealthAssistant = () => {
           <input 
             type="text"
             className="flex-1 bg-transparent border-none text-slate-200 px-2 py-3 focus:outline-none placeholder-slate-500"
-            placeholder="Type your health queries here..." 
+            placeholder="Type your health queries..." 
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
