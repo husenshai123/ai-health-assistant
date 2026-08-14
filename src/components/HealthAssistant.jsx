@@ -26,7 +26,6 @@ const Typewriter = ({ text }) => {
 };
 
 const HealthAssistant = () => {
-  // NAYA: Local storage se user ka naam nikalna
   const userName = localStorage.getItem('health_user') || 'Patient';
 
   const defaultGreeting = { 
@@ -60,13 +59,12 @@ const HealthAssistant = () => {
     localStorage.setItem('health_chat_history', JSON.stringify(messagesToSave));
   }, [messages]);
 
-  // NAYA: Secure Logout Functionality
   const handleLogout = () => {
     if (window.confirm('Are you sure you want to securely log out?')) {
       localStorage.removeItem('health_token');
       localStorage.removeItem('health_user');
-      localStorage.removeItem('health_chat_history'); // Optional: clear chat on logout
-      window.location.reload(); // Reload to trigger App.jsx Auth screen
+      localStorage.removeItem('health_chat_history'); 
+      window.location.reload(); 
     }
   };
 
@@ -130,15 +128,28 @@ const HealthAssistant = () => {
     setIsTyping(true);
 
     try {
+        const token = localStorage.getItem('health_token');
+
         const res = await fetch('http://localhost:5000/api/ai/chat', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}` 
             },
             body: JSON.stringify({ message: messageText, image: imageToSend }),
         });
 
         const data = await res.json(); 
+
+        if (!res.ok) {
+            console.error("Server Error:", data.error);
+            setMessages((prevMessages) => [
+                ...prevMessages,
+                { role: 'ai', text: `Authentication Error: Please click 'Logout' and Login again to refresh your session.`, time: formatTime(), animate: true, isStarred: false }
+            ]);
+            setIsTyping(false);
+            return;
+        }
 
         if (data.isMedical) {
             setMessages((prevMessages) => [
@@ -151,7 +162,7 @@ const HealthAssistant = () => {
                 { 
                   role: 'ai', 
                   isReport: false, 
-                  text: data.generalResponse || `Here to help, ${userName}. What else can I assist with?`, 
+                  text: data.generalResponse || `Here to help. What else can I assist with?`, 
                   time: formatTime(),
                   animate: true,
                   isStarred: false 
@@ -223,7 +234,6 @@ const HealthAssistant = () => {
   return (
     <div className="flex flex-col h-screen bg-slate-900 font-sans">
       
-      {/* UPDATE: Enhanced Navbar with User Profile & Logout */}
       <header className="flex items-center justify-between px-4 sm:px-8 py-4 bg-slate-800 border-b border-slate-700 shadow-sm z-10 shrink-0">
         <div className="flex items-center gap-3 sm:gap-4">
           <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-blue-500/20 text-blue-400 text-xl sm:text-2xl shadow-inner border border-blue-500/20">🩺</div>
@@ -238,7 +248,6 @@ const HealthAssistant = () => {
         
         <div className="flex items-center gap-3">
           
-          {/* NAYA: User Profile Display */}
           <div className="hidden md:flex flex-col items-end mr-2 pr-4 border-r border-slate-700">
             <span className="text-sm font-bold text-slate-200 capitalize">{userName}</span>
             <span className="text-[10px] text-slate-400">Authenticated User</span>
@@ -253,7 +262,6 @@ const HealthAssistant = () => {
             <span className="hidden sm:inline">New Chat</span>
           </button>
 
-          {/* NAYA: Logout Button */}
           <button onClick={handleLogout} className="flex items-center justify-center w-10 h-10 sm:w-auto sm:h-auto sm:py-2 sm:px-4 gap-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 text-sm font-medium rounded-xl transition-colors border border-red-500/20 shadow-sm" title="Secure Logout">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
             <span className="hidden sm:inline">Logout</span>
@@ -261,7 +269,6 @@ const HealthAssistant = () => {
         </div>
       </header>
 
-      {/* Chat Area */}
       <div className="flex-1 relative overflow-hidden flex flex-col">
         <div ref={chatContainerRef} onScroll={handleScroll} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
           {messages.map((msg, index) => (
@@ -339,7 +346,6 @@ const HealthAssistant = () => {
         )}
       </div>
 
-      {/* Input Form Section */}
       <div className="p-4 sm:p-6 bg-slate-900 border-t border-slate-800 shrink-0">
         
         <div className="max-w-5xl mx-auto flex flex-wrap gap-2 mb-4">

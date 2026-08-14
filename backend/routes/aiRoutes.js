@@ -1,9 +1,12 @@
 const express = require('express');
 const router = express.Router();
+const verifyToken = require('../middleware/authMiddleware'); // Hamara security guard
+const { getHealthAnalysis, getChatHistory } = require('../controllers/aiController');
 
-const { getHealthAnalysis } = require('../controllers/aiController');
+// GET request: User ki purani chat history fetch karne ke liye
+router.get('/history', verifyToken, getChatHistory);
 
-// when post request came from fronend this function work
-router.post('/chat', getHealthAnalysis);
+// POST request: Naya message bhejne ke liye (ispar bhi verifyToken lagaya hai taaki DB me user ID save ho)
+router.post('/chat', verifyToken, getHealthAnalysis);
 
 module.exports = router;
