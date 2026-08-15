@@ -35,10 +35,8 @@ const HealthAssistant = () => {
     isStarred: false 
   };
   
-  const [messages, setMessages] = useState(() => {
-    const savedMessages = localStorage.getItem('health_chat_history');
-    return savedMessages ? JSON.parse(savedMessages) : [defaultGreeting];
-  });
+  // NAYA: Ab initial state sirf default greeting rahegi, localStorage nahi
+  const [messages, setMessages] = useState([defaultGreeting]);
   
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -50,36 +48,58 @@ const HealthAssistant = () => {
   const chatContainerRef = useRef(null); 
   const fileInputRef = useRef(null); 
 
+  // NAYA: Backend se Chat History fetch karne ka logic
+  useEffect(() => {
+    const fetchChatHistory = async () => {
+      try {
+        const token = localStorage.getItem('health_token');
+        if (!token) return;
+
+        const res = await fetch('http://localhost:5000/api/ai/history', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (res.ok) {
+          const historyData = await res.json();
+          // Agar database me purani chat hai, toh usko set kar do
+          if (historyData && historyData.length > 0) {
+            setMessages(historyData);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching chat history:", error);
+      }
+    };
+
+    fetchChatHistory();
+  }, []); // [] ka matlab hai ye sirf ek baar chalega jab component load hoga
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isTyping]);
-
-  useEffect(() => {
-    const messagesToSave = messages.map(msg => ({ ...msg, animate: false }));
-    localStorage.setItem('health_chat_history', JSON.stringify(messagesToSave));
-  }, [messages]);
 
   const handleLogout = () => {
     if (window.confirm('Are you sure you want to securely log out?')) {
       localStorage.removeItem('health_token');
       localStorage.removeItem('health_user');
-      localStorage.removeItem('health_chat_history'); 
       window.location.reload(); 
     }
   };
 
   const handleClearChat = () => {
-    if (window.confirm('Are you sure you want to start a new chat? Your current history will be deleted.')) {
+    if (window.confirm('Are you sure you want to clear the screen? (Note: History is still saved in cloud)')) {
       const freshGreeting = { ...defaultGreeting, time: formatTime(), animate: true };
       setMessages([freshGreeting]);
-      localStorage.removeItem('health_chat_history');
       setInputValue('');
       setSelectedImage(null);
     }
   };
 
   const handleDeleteMessage = (indexToDelete) => {
-    if (window.confirm('Are you sure you want to delete this message?')) {
+    if (window.confirm('Are you sure you want to delete this message from view?')) {
       setMessages((prevMessages) => prevMessages.filter((_, index) => index !== indexToDelete));
     }
   };
@@ -257,9 +277,9 @@ const HealthAssistant = () => {
             📄 Export
           </button>
           
-          <button onClick={handleClearChat} className="flex items-center justify-center w-10 h-10 sm:w-auto sm:h-auto sm:py-2 sm:px-4 gap-2 bg-slate-700 hover:bg-slate-600 text-slate-200 text-sm font-medium rounded-xl transition-colors border border-slate-600 shadow-sm" title="Start a new conversation">
+          <button onClick={handleClearChat} className="flex items-center justify-center w-10 h-10 sm:w-auto sm:h-auto sm:py-2 sm:px-4 gap-2 bg-slate-700 hover:bg-slate-600 text-slate-200 text-sm font-medium rounded-xl transition-colors border border-slate-600 shadow-sm" title="Clear screen">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
-            <span className="hidden sm:inline">New Chat</span>
+            <span className="hidden sm:inline">Clear Chat</span>
           </button>
 
           <button onClick={handleLogout} className="flex items-center justify-center w-10 h-10 sm:w-auto sm:h-auto sm:py-2 sm:px-4 gap-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 text-sm font-medium rounded-xl transition-colors border border-red-500/20 shadow-sm" title="Secure Logout">
