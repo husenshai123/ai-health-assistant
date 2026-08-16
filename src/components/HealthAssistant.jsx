@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import Navbar from './Navbar';
 import MessageBubble from './MessageBubble';
 import ChatInput from './ChatInput';
+import ProfileModal from './ProfileModal';
 
 const formatTime = () => new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
@@ -15,6 +16,7 @@ const HealthAssistant = () => {
   const [showScrollButton, setShowScrollButton] = useState(false); 
   const [isListening, setIsListening] = useState(false); 
   const [selectedImage, setSelectedImage] = useState(null);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   
   const messagesEndRef = useRef(null);
   const chatContainerRef = useRef(null); 
@@ -94,8 +96,13 @@ const HealthAssistant = () => {
 
   return (
     <div className="flex flex-col h-screen bg-slate-900 font-sans">
-      <Navbar userName={userName} onExport={handleExportChat} onClear={handleClearChat} onLogout={handleLogout} />
-      
+<Navbar 
+  userName={userName} 
+  onExport={handleExportChat} 
+  onClear={handleClearChat} 
+  onLogout={handleLogout} 
+  onOpenProfile={() => setIsProfileOpen(true)} // <-- YE LINE ADD KARNI HAI
+/>      
       <div className="flex-1 relative overflow-hidden flex flex-col">
         <div ref={chatContainerRef} onScroll={handleScroll} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
           {messages.map((msg, index) => (
@@ -108,7 +115,7 @@ const HealthAssistant = () => {
       </div>
 
       <ChatInput inputValue={inputValue} setInputValue={setInputValue} isTyping={isTyping} isListening={isListening} selectedImage={selectedImage} setSelectedImage={setSelectedImage} handleImageUpload={handleImageUpload} handleSendMessage={handleSendMessage} handleVoiceInput={handleVoiceInput} fileInputRef={fileInputRef} />
-    </div>
+<ProfileModal isOpen={isProfileOpen} onClose={() => setIsProfileOpen(false)} />    </div>
   );
 };
 
