@@ -5,10 +5,23 @@ const ProfileModal = ({ isOpen, onClose }) => {
 
     useEffect(() => {
         if(isOpen) {
-            fetch('http://localhost:5000/api/ai/profile', { headers: { 'Authorization': `Bearer ${localStorage.getItem('health_token')}` }})
-            .then(res => res.json()).then(data => setProfile({ age: data.age || '', gender: data.gender || '', medicalHistory: data.medicalHistory || '' }));
+            fetch('http://localhost:5000/api/ai/profile', { 
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('health_token')}` }
+            })
+            .then(res => {
+                if (!res.ok) throw new Error("API Route not found"); // HTML aane se pehle rok dega
+                return res.json();
+            })
+            .then(data => setProfile({ 
+                age: data.age || '', 
+                gender: data.gender || '', 
+                medicalHistory: data.medicalHistory || '' 
+            }))
+            .catch(err => {
+                console.error("Profile fetch skipped/failed:", err.message);
+            });
         }
-    }, [isOpen]);
+    },[isOpen]);
 
     const handleSave = async () => {
         await fetch('http://localhost:5000/api/ai/profile', {

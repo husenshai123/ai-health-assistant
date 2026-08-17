@@ -1,7 +1,7 @@
 import React from 'react';
 
-// NAYA: onOpenProfile prop add kiya
-const Navbar = ({ userName, onExport, onClear, onLogout, onOpenProfile }) => {
+// YAHAN DHYAN DO: onOpenAnalytics add kiya hai
+const Navbar = ({ userName, onExport, onClear, onLogout, onOpenProfile, onOpenAnalytics }) => {
   return (
     <header className="flex items-center justify-between px-4 sm:px-8 py-4 bg-slate-800 border-b border-slate-700 shadow-sm z-10 shrink-0">
       <div className="flex items-center gap-3 sm:gap-4">
@@ -21,9 +21,13 @@ const Navbar = ({ userName, onExport, onClear, onLogout, onOpenProfile }) => {
           <span className="text-[10px] text-slate-400">Authenticated User</span>
         </div>
 
-        {/* NAYA BUTTON: Profile open karne ke liye */}
         <button onClick={onOpenProfile} className="hidden sm:flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium py-2 px-4 rounded-xl transition-colors shadow-sm" title="Edit Patient Profile">
           👤 Profile
+        </button>
+
+        {/* ANALYTICS BUTTON (Ab ye click hoga) */}
+        <button onClick={onOpenAnalytics} className="hidden sm:flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium py-2 px-4 rounded-xl transition-colors shadow-sm" title="View Health Analytics">
+          📊 Analytics
         </button>
 
         <button onClick={onExport} className="hidden sm:flex items-center gap-2 bg-slate-700 hover:bg-slate-600 text-slate-200 text-sm font-medium py-2 px-4 rounded-xl transition-colors border border-slate-600 shadow-sm">
