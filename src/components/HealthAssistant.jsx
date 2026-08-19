@@ -4,6 +4,7 @@ import MessageBubble from './MessageBubble';
 import ChatInput from './ChatInput';
 import ProfileModal from './ProfileModal';
 import AnalyticsModal from './AnalyticsModal';
+import BMIModal from './BMIModal';
 
 const formatTime = () => new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
@@ -19,6 +20,8 @@ const HealthAssistant = () => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
+  const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
+  const [isBMIOpen, setIsBMIOpen] = useState(false); 
   
   const messagesEndRef = useRef(null);
   const chatContainerRef = useRef(null); 
@@ -105,6 +108,7 @@ const HealthAssistant = () => {
   onLogout={handleLogout} 
   onOpenProfile={() => setIsProfileOpen(true)} 
   onOpenAnalytics={() => setIsAnalyticsOpen(true)}
+  onOpenBMI={() => setIsBMIOpen(true)}
 />      
       <div className="flex-1 relative overflow-hidden flex flex-col">
         <div ref={chatContainerRef} onScroll={handleScroll} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
@@ -121,7 +125,10 @@ const HealthAssistant = () => {
 <ProfileModal isOpen={isProfileOpen} onClose={() => setIsProfileOpen(false)} /> 
   <ProfileModal isOpen={isProfileOpen} onClose={() => setIsProfileOpen(false)} />
 <AnalyticsModal isOpen={isAnalyticsOpen} onClose={() => setIsAnalyticsOpen(false)} messages={messages} />
-     </div>
+     
+     <ProfileModal isOpen={isProfileOpen} onClose={() => setIsProfileOpen(false)} /> 
+      <AnalyticsModal isOpen={isAnalyticsOpen} onClose={() => setIsAnalyticsOpen(false)} messages={messages} />
+      <BMIModal isOpen={isBMIOpen} onClose={() => setIsBMIOpen(false)} /></div>
   );
 };
 
