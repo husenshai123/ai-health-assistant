@@ -4,7 +4,7 @@ import MessageBubble from './MessageBubble';
 import ChatInput from './ChatInput';
 import ProfileModal from './ProfileModal';
 import AnalyticsModal from './AnalyticsModal';
-import BMIModal from './BMIModal';
+import BMIModal from './BMIModel';
 
 const formatTime = () => new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
@@ -19,7 +19,6 @@ const HealthAssistant = () => {
   const [isListening, setIsListening] = useState(false); 
   const [selectedImage, setSelectedImage] = useState(null);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
   const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
   const [isBMIOpen, setIsBMIOpen] = useState(false); 
   
